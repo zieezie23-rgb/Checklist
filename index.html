@@ -1,0 +1,256 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e07a3f"><link rel="manifest" href="manifest.json"><title>Checklist Simulasi</title><style>
+@font-face{
+font-family:'AppFont';
+src:local('Roboto'),local('Arial'),local('Helvetica'),local('Segoe UI'),local('sans-serif');
+font-display:swap;
+}
+
+*{box-sizing:border-box}
+:root{--bg:#e8f1ec;--surface:#f7f0df;--surface2:#eee4cc;--border:#d6c9ad;--text:#26332f;--muted:#68756f;--accent:#e07a3f;--accent-soft:#f5d7b7;--done:#2f8f67;--done-bg:#d8ecdf;--bad:#c9554d;--na:#7b817d;--na-bg:#dddcd4}
+body{margin:0;font-family:AppFont,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:16px;overflow:hidden}.card{transition:transform .15s ease,box-shadow .15s ease}.card:hover{transform:translateY(-1px)}button{cursor:pointer}.month{transition:transform .12s ease,background .12s ease}.month:active{transform:scale(.97)}
+button,select,input{font:inherit}
+header{background:var(--surface);padding:10px 16px;border-bottom:1px solid var(--border)}
+h1{margin:0;font-size:27px;font-weight:700;color:var(--text);letter-spacing:.2px}
+.sub{display:none}
+.wrap{max-width:100%;height:calc(100vh - 110px);margin:auto;padding:6px 8px 64px;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:6px;box-shadow:0 1px 2px rgba(20,24,40,.04),0 8px 20px -12px rgba(20,24,40,.10)}
+.hero{background:var(--accent);color:#fff4dc;border:0;box-shadow:0 10px 24px -10px rgba(224,122,63,.35)}
+.hero .muted{color:rgba(255,244,220,.82)}
+.hero b{color:#26332f}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.big{font-size:32px;font-weight:800;letter-spacing:-.5px}.muted{color:var(--muted);font-size:14px;font-weight:500}
+.progress{height:6px;background:rgba(255,244,220,.32);border-radius:99px;overflow:hidden;margin:10px 0}
+.bar{height:100%;background:#f2e7ce;border-radius:99px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:28px;color:var(--text);margin-top:2px}
+.months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.month{border:1px solid var(--border);border-radius:8px;padding:4px 2px;font-weight:600;background:var(--surface2);color:var(--text);min-height:44px;font-size:14px}
+.month.done{background:var(--done-bg);color:var(--done);border-color:transparent}
+.month.na{background:var(--na-bg);color:var(--na);border-color:transparent}
+.month .s{display:block;font-size:12px;font-weight:500;margin-top:3px;opacity:.85}
+select,input{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text)}
+.table{overflow:auto}.table table{border-collapse:collapse;width:100%;min-width:580px}
+.table th,.table td{padding:5px;border:1px solid var(--border);text-align:center;font-size:14px}
+.table th:first-child,.table td:first-child{text-align:left}
+.statusbtn{border:1px solid var(--border);border-radius:8px;padding:4px 6px;background:var(--surface2);color:var(--text)}
+.statusbtn.done{background:var(--done-bg);color:var(--done)}.statusbtn.na{background:var(--na-bg);color:var(--na)}
+.legend{display:none}
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10}
+.nav button{border:0;background:transparent;padding:9px 14px;border-radius:10px;color:var(--muted);font-size:17px;font-weight:600}
+.nav button.active{background:var(--accent-soft);color:var(--accent)}
+.hidden{display:none}
+.card b{font-size:24px;font-weight:600}
+@media(min-width:600px){.months{grid-template-columns:repeat(6,1fr)}}
+.year-table{width:100%;border-collapse:collapse;font-size:16px;border:1px solid var(--border)}.year-table th,.year-table td{padding:5px 3px;border:1px solid var(--border);text-align:center;font-size:16px}.year-table th{font-size:14px;color:var(--muted);font-weight:600}.year-table td:first-child,.year-table th:first-child{text-align:left}.year-table th,.year-table td,.stat b,.month,.month .s{font-family:AppFont,Arial,Helvetica,sans-serif;font-weight:500}.year-table .total{font-weight:800;background:var(--surface2)}.chart{margin-top:6px;height:250px}.chart canvas{width:100%;height:250px;display:block}</style></head><body><header><h1>Checklist Simulasi</h1><div class="sub">Monitoring simulasi bulanan</div></header><main class="wrap"><section id="dashboard"></section><section id="checklist" class="hidden"></section><section id="settings" class="hidden"></section></main><nav class="nav"><button id="nDash" onclick="show('dashboard')">Beranda</button><button id="nSet" onclick="show('settings')">Pengaturan</button></nav><script>
+const months=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+const defaults={2026:['– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','☑ Selesai','☐ Belum','☐ Belum','☐ Belum','☐ Belum'],2027:Array(12).fill('☐ Belum'),2028:Array(12).fill('☐ Belum'),2029:Array(12).fill('☐ Belum'),2030:Array(12).fill('☐ Belum'),2031:Array(12).fill('☐ Belum'),2032:Array(12).fill('☐ Belum'),2033:['☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada']};
+let data=JSON.parse(localStorage.getItem('simulasiData')||'null')||defaults; let active=Number(localStorage.getItem('activeYear')||2026); let target=Number(localStorage.getItem('target')||100); let years=Object.keys(data);
+function save(){localStorage.setItem('simulasiData',JSON.stringify(data));localStorage.setItem('activeYear',active);localStorage.setItem('target',target)}
+function counts(y){let a=data[y]||[];return {done:a.filter(x=>x.includes('Selesai')).length,bad:a.filter(x=>x.includes('Belum')).length,na:a.filter(x=>x.includes('Tidak Ada')).length}}
+function dash(){
+  years=Object.keys(data);
+  let allDone=years.reduce((n,y)=>n+counts(y).done,0);
+  let allBad=years.reduce((n,y)=>n+counts(y).bad,0);
+  let allNa=years.reduce((n,y)=>n+counts(y).na,0);
+  let total=allDone+allBad;
+  let p=total?allDone/total*100:0;
+  let status=p>=target?'TARGET TERCAPAI':p>=50?'DALAM PROSES':'PERLU TINDAKAN';
+  document.getElementById('dashboard').innerHTML=`
+    <div class="card hero">
+      <div class="row"><span class="muted">2026–2033</span><b class="hero-pct">${Math.round(p)}%</b></div>
+      <div class="progress"><div class="bar" style="width:${Math.min(p,100)}%"></div></div>
+      <div class="row"><span class="muted">${total} bulan · Target ${target}%</span><b class="hero-status ${p<50?"danger":p<100?"process":"achieved"}">${p<50?"⚠️ Perlu Tindakan":p<100?"⚠️ Dalam Proses":"☑ Target Tercapai"}</b></div>
+    </div>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><span class="muted">TOTAL</span><b class="orange">${total}</b></div>
+        <div class="stat"><span class="muted">SELESAI</span><b class="green">${allDone}</b></div>
+        <div class="stat"><span class="muted">BELUM</span><b class="orange">${allBad}</b></div>
+      </div>
+      
+    </div>
+    <div class="card">
+      <div class="row"><b>Checklist ${active}</b>
+        <select onchange="active=+this.value;save();render()" style="width:100px;padding:6px">
+          ${years.map(y=>`<option ${+y===active?'selected':''}>${y}</option>`).join('')}
+        </select>
+      </div>
+      <div class="months">
+        ${months.map((mo,i)=>{let s=data[active][i],icon=s.includes('Selesai')?'☑':s.includes('Tidak Ada')?'–':'☐';return `<button class="month ${s.includes('Selesai')?'done':s.includes('Tidak Ada')?'na':''}" onclick="cycle(${active},${i})"><span>${mo.slice(0,3)}</span><span class="s">${icon}</span></button>`}).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><b>Rekap per Tahun</b><span class="muted">2026–2033</span></div>
+      <div style="overflow:auto">
+        <table class="year-table">
+          <thead><tr><th>Tahun</th><th>Total</th><th>Selesai</th><th>Belum</th><th>Tidak Ada</th><th>%</th></tr></thead>
+          <tbody>
+            ${years.map(y=>{let x=counts(y),t=x.done+x.bad,q=t?x.done/t*100:0;return `<tr><td><b>${y}</b></td><td class="orange">${t}</td><td class="green">${x.done}</td><td class="orange">${x.bad}</td><td class="red">${x.na}</td><td class="green"><b>${Math.round(q)}%</b></td></tr>`}).join('')}
+            <tr class="total"><td>TOTAL</td><td class="orange">${total}</td><td class="green">${allDone}</td><td class="orange">${allBad}</td><td class="red">${allNa}</td><td class="green">${Math.round(p)}%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><b>Grafik Progress Tahunan</b><span class="muted">2026–2033</span></div>
+      <div class="chart"><canvas id="yearLineChart"></canvas></div>
+    </div>`;
+}
+function drawYearLineChart(){const cv=document.getElementById('yearLineChart');if(!cv)return;let w=cv.getBoundingClientRect().width||cv.parentElement.clientWidth||cv.clientWidth;if(!w){requestAnimationFrame(drawYearLineChart);return}const d=devicePixelRatio||1,h=250;cv.width=w*d;cv.height=h*d;const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);const L=34,R=10,T=12,B=30,p=(w-L-R)/(years.length-1),v=years.map(y=>{let z=counts(y),t=z.done+z.bad;return t?z.done/t*100:0});c.clearRect(0,0,w,h);c.font='14px sans-serif';c.lineWidth=1;c.strokeStyle='#d6c9ad';c.fillStyle='#68756f';for(let n=0;n<=100;n+=25){let yy=T+(h-T-B)*(1-n/100);c.beginPath();c.moveTo(L,yy);c.lineTo(w-R,yy);c.stroke();c.fillText(n+'%',3,yy+3)}c.strokeStyle='#e07a3f';c.lineWidth=2.5;c.beginPath();v.forEach((n,i)=>{let x=L+i*p,y=T+(h-T-B)*(1-n/100);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();v.forEach((n,i)=>{let x=L+i*p,y=T+(h-T-B)*(1-n/100);c.fillStyle='#e07a3f';c.beginPath();c.arc(x,y,3.5,0,Math.PI*2);c.fill();c.fillStyle='#68756f';c.textAlign='center';c.fillText(years[i],x,h-8)});c.textAlign='start'}
+function cycle(y,i){let s=data[y][i];data[y][i]=s.includes('Belum')?'☑ Selesai':s.includes('Selesai')?'– Tidak Ada':'☐ Belum';save();render()}
+function check(){document.getElementById('checklist').innerHTML='';}
+function settings(){document.getElementById('settings').innerHTML=`<div class="card"><b>Pengaturan</b><p class="muted">Pengaturan disimpan otomatis di perangkat.</p><label>Tahun aktif</label><select id="sy" onchange="active=+this.value;save();render()">${Object.keys(data).map(y=>`<option ${+y===active?'selected':''}>${y}</option>`).join('')}</select><br><br><label>Target minimal (%)</label><input type="number" min="0" max="100" value="${target}" onchange="target=Math.max(0,Math.min(100,+this.value||0));save();render()"></div><div class="card"><b>Data</b><p class="muted">Data checklist tersimpan lokal di HP. Tidak perlu internet setelah aplikasi dibuka.</p><button onclick="if(confirm('Kembalikan semua data ke kondisi awal file Excel?')){data=JSON.parse(JSON.stringify(defaults));active=2026;target=100;save();render()}" style="padding:12px;border:1px solid rgba(232,96,79,.25);border-radius:12px;background:rgba(232,96,79,.1);color:#e8604f;font-weight:700">Reset ke data awal</button></div>`}
+function show(id){let home=id==='dashboard';document.getElementById('dashboard').classList.toggle('hidden',!home);document.getElementById('checklist').classList.toggle('hidden',!home);document.getElementById('settings').classList.toggle('hidden',home);document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));document.getElementById(home?'nDash':'nSet').classList.add('active');render(id)}
+function render(){dash();check();settings();requestAnimationFrame(drawYearLineChart)}show('dashboard'); if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script><style>
+header{padding:10px 16px}
+.hero-pct{font-size:28px!important}
+.hero-status{font-size:15px!important;font-weight:800!important}
+.hero-status.danger{color:#fff;background:#b52d27;padding:2px 7px;border-radius:7px;animation:dangerPulse .75s infinite, dangerShake .16s infinite}
+.hero-status.process{color:#8a5200}
+.hero-status.achieved{color:#d9ffe9}
+@keyframes dangerPulse{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes dangerShake{0%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}100%{transform:translateX(0)}}
+.stats .muted{font-size:12px!important}
+.stat b{font-size:24px!important}
+.orange{color:#e07a3f!important}.green{color:#2f8f67!important}.red{color:#9f332d!important}
+.check-head{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.check-head b{font-size:22px!important}.check-head select{width:78px!important;padding:5px!important;margin-left:0}
+.month{display:flex!important;align-items:center;justify-content:center!important;text-align:center!important;padding:3px 7px!important}
+.month .s{margin-top:0!important;font-size:80%!important;line-height:1!important;font-weight:900!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.year-table th{background:#d7c9ad!important;color:#26332f!important}
+.year-table .total td{background:#d7c9ad!important}
+.year-table .total .orange{color:#e07a3f!important}.year-table .total .green{color:#2f8f67!important}.year-table .total .red{color:#9f332d!important}
+.chart{height:250px!important}.chart canvas{height:250px!important}
+</style>
+<style>
+/* Revisi tampilan */
+.stats .muted{
+    font-size:10px !important;
+    line-height:1.05 !important;
+}
+.stat{
+    padding:6px 5px !important;
+    min-height:48px !important;
+}
+.stat b{
+    font-size:23px !important;
+    margin-top:1px !important;
+}
+
+/* Checklist: beri ruang lebih dan besarkan status */
+.month{
+    padding:4px 9px !important;
+    min-height:38px !important;
+}
+.month span:first-child{
+    padding-left:2px !important;
+}
+.month .s{
+    font-size:18px !important;
+    line-height:1 !important;
+    margin-left:6px !important;
+}
+
+/* Rekap tahunan: hanya baris TOTAL yang berwarna */
+.year-table td.orange,
+.year-table td.green,
+.year-table td.red{
+    color:var(--text) !important;
+}
+.year-table .total td.orange{color:#e07a3f !important}
+.year-table .total td.green{color:#2f8f67 !important}
+.year-table .total td.red{color:#9f332d !important}
+.year-table th,.year-table td{
+    padding:3px 3px !important;
+    line-height:1.05 !important;
+}
+
+/* Grafik dibuat lebih proporsional dengan halaman */
+.chart{
+    height:195px !important;
+}
+.chart canvas{
+    height:195px !important;
+}
+</style>
+<script>
+/* Tinggi kanvas grafik mengikuti CSS baru agar tetap tajam dan proporsional */
+function drawYearLineChart(){
+    const cv=document.getElementById('yearLineChart');
+    if(!cv)return;
+    let w=cv.getBoundingClientRect().width||cv.parentElement.clientWidth||cv.clientWidth;
+    if(!w){requestAnimationFrame(drawYearLineChart);return}
+    const d=devicePixelRatio||1,h=195;
+    cv.width=w*d;cv.height=h*d;
+    const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
+    const L=34,R=10,T=10,B=27,p=years.length>1?(w-L-R)/(years.length-1):0;
+    const v=years.map(y=>{let z=counts(y),t=z.done+z.bad;return t?z.done/t*100:0});
+    c.clearRect(0,0,w,h);
+    c.font='13px sans-serif';c.lineWidth=1;c.strokeStyle='#d6c9ad';c.fillStyle='#68756f';
+    for(let n=0;n<=100;n+=25){
+        let yy=T+(h-T-B)*(1-n/100);
+        c.beginPath();c.moveTo(L,yy);c.lineTo(w-R,yy);c.stroke();
+        c.fillText(n+'%',3,yy+3);
+    }
+    c.strokeStyle='#e07a3f';c.lineWidth=2.5;c.beginPath();
+    v.forEach((n,i)=>{
+        let x=L+i*p,y=T+(h-T-B)*(1-n/100);
+        i?c.lineTo(x,y):c.moveTo(x,y);
+    });
+    c.stroke();
+    v.forEach((n,i)=>{
+        let x=L+i*p,y=T+(h-T-B)*(1-n/100);
+        c.fillStyle='#e07a3f';c.beginPath();c.arc(x,y,3.5,0,Math.PI*2);c.fill();
+        c.fillStyle='#68756f';c.textAlign='center';c.fillText(years[i],x,h-7);
+    });
+    c.textAlign='start';
+}
+</script>
+<style>
+/* Penyesuaian checklist */
+.month{
+  padding:5px 14px !important;
+}
+.month .s{
+  font-size:17px !important;
+  line-height:1.1 !important;
+  margin-top:0 !important;
+  font-weight:900 !important;
+}
+</style></body></html>
+
+<script>window.addEventListener('resize',drawYearLineChart);</script>
+
+<style>.year-table td b{font-size:16px!important;font-weight:500!important}.nav button{font-size:16px!important}</style>
+<style>
+.year-table th{
+    font-weight:700 !important;
+    font-size:15px !important;
+}
+
+/* Data tabel lebih tipis */
+.year-table td{
+    font-weight:400 !important;
+    font-size:15px !important;
+}
+.year-table td b{
+    font-weight:500 !important;
+    font-size:15px !important;
+}
+
+/* Checklist lebih ringkas */
+.months{
+    gap:4px !important;
+}
+.month{
+    min-height:38px !important;
+    padding:3px 1px !important;
+    font-size:13px !important;
+}
+.month .s{
+    font-size:11px !important;
+    margin-top:1px !important;
+}
+</style>
