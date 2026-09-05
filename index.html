@@ -219,7 +219,31 @@ function drawYearLineChart(){
   margin-top:0 !important;
   font-weight:900 !important;
 }
-</style></body></html>
+</style>
+<style id="scroll-fix">
+html, body {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+body {
+  overflow: visible !important;
+}
+.wrap {
+  height: auto !important;
+  min-height: calc(100vh - 110px) !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 90px !important;
+}
+.nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  z-index: 100 !important;
+}
+</style>
+</body></html>
 
 <script>window.addEventListener('resize',drawYearLineChart);</script>
 
