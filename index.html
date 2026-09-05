@@ -72,7 +72,32 @@ main.wrap {
   right: 0 !important;
   z-index: 1000 !important;
 }
-</style></head><body><header><h1>Checklist Simulasi</h1><div class="sub">Monitoring simulasi bulanan</div></header><main class="wrap"><section id="dashboard"></section><section id="checklist" class="hidden"></section><section id="settings" class="hidden"></section></main><nav class="nav"><button id="nDash" onclick="show('dashboard')">Beranda</button><button id="nSet" onclick="show('settings')">Pengaturan</button></nav><script>
+</style><style id="checklist-lock">
+.month:disabled{cursor:not-allowed !important;opacity:1 !important}
+.month.na:disabled{pointer-events:none !important}
+</style>
+<style id="compact-panels">
+/* Panel progress dibuat lebih pendek */
+.hero{
+  padding:7px 10px !important;
+}
+.hero .progress{
+  margin:6px 0 !important;
+  height:5px !important;
+}
+
+/* Judul panel diperkecil */
+.card > .row > b{
+  font-size:20px !important;
+  line-height:1.15 !important;
+}
+
+/* Khusus judul checklist agar tetap proporsional */
+.card .row b:not(.hero-pct):not(.hero-status){
+  line-height:1.15 !important;
+}
+</style>
+</head><body><header><h1>Checklist Simulasi</h1><div class="sub">Monitoring simulasi bulanan</div></header><main class="wrap"><section id="dashboard"></section><section id="checklist" class="hidden"></section><section id="settings" class="hidden"></section></main><nav class="nav"><button id="nDash" onclick="show('dashboard')">Beranda</button><button id="nSet" onclick="show('settings')">Pengaturan</button></nav><script>
 const months=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
 const defaults={2026:['– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','☑ Selesai','☐ Belum','☐ Belum','☐ Belum','☐ Belum'],2027:Array(12).fill('☐ Belum'),2028:Array(12).fill('☐ Belum'),2029:Array(12).fill('☐ Belum'),2030:Array(12).fill('☐ Belum'),2031:Array(12).fill('☐ Belum'),2032:Array(12).fill('☐ Belum'),2033:['☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','☐ Belum','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada','– Tidak Ada']};
 let data=JSON.parse(localStorage.getItem('simulasiData')||'null')||defaults; let active=Number(localStorage.getItem('activeYear')||2026); let target=Number(localStorage.getItem('target')||100); let years=Object.keys(data);
@@ -107,7 +132,7 @@ function dash(){
         </select>
       </div>
       <div class="months">
-        ${months.map((mo,i)=>{let s=data[active][i],icon=s.includes('Selesai')?'☑':s.includes('Tidak Ada')?'–':'☐';return `<button class="month ${s.includes('Selesai')?'done':s.includes('Tidak Ada')?'na':''}" onclick="cycle(${active},${i})"><span>${mo.slice(0,3)}</span><span class="s">${icon}</span></button>`}).join('')}
+        ${months.map((mo,i)=>{let s=data[active][i],locked=s.includes('Tidak Ada'),icon=s.includes('Selesai')?'☑':locked?'–':'☐';return `<button class="month ${s.includes('Selesai')?'done':locked?'na':''}" ${locked?'disabled':''} onclick="${locked?'return false;':`cycle(${active},${i})`}"><span>${mo.slice(0,3)}</span><span class="s">${icon}</span></button>`}).join('')}
       </div>
     </div>
     <div class="card">
@@ -128,7 +153,7 @@ function dash(){
     </div>`;
 }
 function drawYearLineChart(){const cv=document.getElementById('yearLineChart');if(!cv)return;let w=cv.getBoundingClientRect().width||cv.parentElement.clientWidth||cv.clientWidth;if(!w){requestAnimationFrame(drawYearLineChart);return}const d=devicePixelRatio||1,h=250;cv.width=w*d;cv.height=h*d;const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);const L=34,R=10,T=12,B=30,p=(w-L-R)/(years.length-1),v=years.map(y=>{let z=counts(y),t=z.done+z.bad;return t?z.done/t*100:0});c.clearRect(0,0,w,h);c.font='14px sans-serif';c.lineWidth=1;c.strokeStyle='#d6c9ad';c.fillStyle='#68756f';for(let n=0;n<=100;n+=25){let yy=T+(h-T-B)*(1-n/100);c.beginPath();c.moveTo(L,yy);c.lineTo(w-R,yy);c.stroke();c.fillText(n+'%',3,yy+3)}c.strokeStyle='#e07a3f';c.lineWidth=2.5;c.beginPath();v.forEach((n,i)=>{let x=L+i*p,y=T+(h-T-B)*(1-n/100);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();v.forEach((n,i)=>{let x=L+i*p,y=T+(h-T-B)*(1-n/100);c.fillStyle='#e07a3f';c.beginPath();c.arc(x,y,3.5,0,Math.PI*2);c.fill();c.fillStyle='#68756f';c.textAlign='center';c.fillText(years[i],x,h-8)});c.textAlign='start'}
-function cycle(y,i){let s=data[y][i];data[y][i]=s.includes('Belum')?'☑ Selesai':s.includes('Selesai')?'– Tidak Ada':'☐ Belum';save();render()}
+function cycle(y,i){let s=data[y][i];if(s.includes('Tidak Ada'))return;data[y][i]=s.includes('Selesai')?'☐ Belum':'☑ Selesai';save();render()}
 function check(){document.getElementById('checklist').innerHTML='';}
 function settings(){document.getElementById('settings').innerHTML=`<div class="card"><b>Pengaturan</b><p class="muted">Pengaturan disimpan otomatis di perangkat.</p><label>Tahun aktif</label><select id="sy" onchange="active=+this.value;save();render()">${Object.keys(data).map(y=>`<option ${+y===active?'selected':''}>${y}</option>`).join('')}</select><br><br><label>Target minimal (%)</label><input type="number" min="0" max="100" value="${target}" onchange="target=Math.max(0,Math.min(100,+this.value||0));save();render()"></div><div class="card"><b>Data</b><p class="muted">Data checklist tersimpan lokal di HP. Tidak perlu internet setelah aplikasi dibuka.</p><button onclick="if(confirm('Kembalikan semua data ke kondisi awal file Excel?')){data=JSON.parse(JSON.stringify(defaults));active=2026;target=100;save();render()}" style="padding:12px;border:1px solid rgba(232,96,79,.25);border-radius:12px;background:rgba(232,96,79,.1);color:#e8604f;font-weight:700">Reset ke data awal</button></div>`}
 function show(id){let home=id==='dashboard';document.getElementById('dashboard').classList.toggle('hidden',!home);document.getElementById('checklist').classList.toggle('hidden',!home);document.getElementById('settings').classList.toggle('hidden',home);document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));document.getElementById(home?'nDash':'nSet').classList.add('active');render(id)}
